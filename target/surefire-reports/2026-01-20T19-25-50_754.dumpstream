@@ -1,0 +1,5 @@
+# Created at 2026-01-20T19:25:50.982
+Boot Manifest-JAR contains absolute paths in classpath 'D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
