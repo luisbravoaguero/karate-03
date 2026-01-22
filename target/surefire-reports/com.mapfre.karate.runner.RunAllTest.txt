@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.mapfre.karate.runner.RunAllTest
--------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.442 s -- in com.mapfre.karate.runner.RunAllTest

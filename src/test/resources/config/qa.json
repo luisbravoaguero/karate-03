@@ -7,4 +7,6 @@
     "serviceB":    { "baseUrl": "https://api-b.dev.company.com" },
     "serviceC":    { "baseUrl": "https://api-c.dev.company.com" }
   },
+
+  "baseUrl": "https://postman-echo.com"
 }

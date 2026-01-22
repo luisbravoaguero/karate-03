@@ -9,7 +9,5 @@ Feature: Login (training)
     When method post
     Then status 200
 
-    # Postman Echo returns what you sent under response.json
     * def toke = 'Bearer ' + response.json.username + '-token'
-    * print toke
     * match toke contains 'Bearer'
