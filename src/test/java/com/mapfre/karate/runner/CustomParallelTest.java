@@ -99,7 +99,7 @@ public class CustomParallelTest {
                 String src = shortSrc(sc);
 
                 consoleOut.println(String.format(
-                        "[SCN %02d] PASS  | %.2fs | env=%s | svc=%s | src=%s | SCN=\"%s\"%s",
+                        "[SCN %02d] PASS  | %.2fs | env=%s | svc=%s | feat=%s | SCN=\"%s\"%s",
                         scn, sr.getDurationMillis() / 1000.0, env, safeSvc(service), src, safeName(sc.getName()),
                         retried > 0 ? " | (passed after retries)" : ""
                 ));
@@ -156,7 +156,7 @@ public class CustomParallelTest {
                 String src = shortSrc(sc);
 
                 consoleOut.println(String.format(
-                        "[SCN %02d] RETRY | %d/%d | env=%s | svc=%s | src=%s | SCN=\"%s\" | reason=%s",
+                        "[SCN %02d] RETRY | %d/%d | env=%s | svc=%s | feat=%s | SCN=\"%s\" | reason=%s",
                         scn, attempt, maxRetries, env, safeSvc(service), src, safeName(sc.getName()), reason
                 ));
 
