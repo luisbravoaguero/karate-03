@@ -1,3 +1,3 @@
-com\mapfre\karate\runner\RunAllTest.class
 com\mapfre\karate\runner\CustomParallelTest.class
+com\mapfre\karate\runner\RunAllTest.class
 com\mapfre\karate\runner\ParallelTest.class

@@ -54,9 +54,10 @@ public class CustomParallelTest {
             // Run tests (Karate internal output goes to file now)
             results = Runner.builder()
                     .path("classpath:features/tests")     // IMPORTANT: only scan tests folder
-                    .tags(tags.toArray(new String[0]))    // smoke + service tag
+                    .tags(tags.toArray(new String[0]))    // e.g. @smoke + @svc_postmanEcho
                     .reportDir("target/karate-reports")
                     .outputCucumberJson(true)
+                    .outputJunitXml(true)                // ✅ adds JUnit XML per scenario (good for Octane)
                     .parallel(threads);
 
             // Build stable scenario numbering from first run
