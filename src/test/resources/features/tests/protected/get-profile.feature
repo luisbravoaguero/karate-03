@@ -4,7 +4,7 @@ Feature: Protected call (training)
     * url baseUrl
     * headers commonHeaders
   Scenario: Use token from login in a second call
-    * def loginResult = call read('classpath:features/auth/login.feature')
+    * def loginResult = call read('classpath:features/calls/auth/login.feature')
     * def token = loginResult.toke
     * header Authorization = token
     #* configure headers = karate.merge(commonHeaders, { Authorization: token })

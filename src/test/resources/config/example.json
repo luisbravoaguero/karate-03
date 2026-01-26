@@ -1,0 +1,25 @@
+{
+  "defaults": {
+    "service": "postmanEcho"
+  },
+  "services": {
+    "postmanEcho": {
+      "baseUrl": "https://postman-echo.com"
+    },
+    "dummyjson": {
+      "baseUrl": "https://dummyjson.com",
+      "username": "emilys",
+      "password": "emilyspass"
+    },
+
+    "serviceA": {
+      "baseUrl": "https://api-a.dev.company.com"
+    },
+    "serviceB": {
+      "baseUrl": "https://api-b.dev.company.com"
+    },
+    "serviceC": {
+      "baseUrl": "https://api-c.dev.company.com"
+    }
+  }
+}
