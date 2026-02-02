@@ -1,4 +1,4 @@
-@svc_postmanEcho
+@svc_postmanEcho @somke
 Feature: Postman Bedroom
 
   Background:

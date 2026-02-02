@@ -1,5 +1,4 @@
-@svc_dummyjson
-@regression
+@svc_dummyjson @smoke
 Feature: DummyJSON Workflow - Regression
 
   Background:

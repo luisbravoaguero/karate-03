@@ -6,7 +6,7 @@ Feature: DummyJSON Products - Contract
     * url baseUrl
     * headers commonHeaders
 
-  @smoke
+
   Scenario: Products - GET /products/1 returns expected fields
     Given path 'products', 1
     When method get

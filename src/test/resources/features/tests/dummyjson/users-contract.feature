@@ -1,5 +1,4 @@
-@svc_dummyjson
-@contract
+@smoke @svc_dummyjson
 Feature: DummyJSON Users - Contract
 
   Background:

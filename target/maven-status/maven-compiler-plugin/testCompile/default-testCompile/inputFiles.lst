@@ -1,3 +1,9 @@
-D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\com\mapfre\karate\runner\CustomParallelTest.java
-D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\com\mapfre\karate\runner\ParallelTest.java
-D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\com\mapfre\karate\runner\RunAllTest.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runner\SmokeTesta.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runner\RegressionTesta.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runnersIT\BaseKarateRunner.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runnersIT\RegressionIT.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\report\ExecutiveSummaryReport.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runner\ContractTesta.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runnersIT\ContractIT.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runner\BaseKarateRunner.java
+D:\workspace\karatedsl\karatedsl-project-05\karatedsl-project-try05\src\test\java\runnersIT\SmokeIT.java

@@ -1,3 +1,14 @@
-com\mapfre\karate\runner\CustomParallelTest.class
-com\mapfre\karate\runner\RunAllTest.class
-com\mapfre\karate\runner\ParallelTest.class
+runner\BaseKarateRunner.class
+report\ExecutiveSummaryReport$1.class
+runner\RegressionTesta.class
+runnersIT\BaseKarateRunner.class
+report\ExecutiveSummaryReport$Status.class
+runnersIT\ContractIT.class
+report\ExecutiveSummaryReport$TestCaseResult.class
+runner\SmokeTesta.class
+runnersIT\SmokeIT.class
+report\ExecutiveSummaryReport$Summary.class
+runner\ContractTesta.class
+runnersIT\RegressionIT.class
+report\ExecutiveSummaryReport$SuiteResult.class
+report\ExecutiveSummaryReport.class

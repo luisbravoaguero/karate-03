@@ -1,4 +1,4 @@
-@svc_postmanEcho
+@svc_postmanEcho @smoke
 Feature: Postman Echo - 10 easy smoke scenarios (for logging demo)
 
   Background:
@@ -21,7 +21,7 @@ Feature: Postman Echo - 10 easy smoke scenarios (for logging demo)
     And param source = 'smoke'
     And request { item: 'book', qty: 2 }
     When method post
-    Then status 200
+    Then status 201
     * match response.args.source == 'smoke'
     * match response.json.item == 'book'
     * match response.json.qty == 2
@@ -73,3 +73,18 @@ Feature: Postman Echo - 10 easy smoke scenarios (for logging demo)
     When method get
     Then status 200
     * match responseHeaders['test'] == 'hello'
+
+  @baseYeto
+  Scenario: Echo - GET /3 flow
+    Given path 'response-headers'
+    And param test = 'hello'
+    When method get
+    Then status 200
+    Given path 'headers'
+    When method get
+    Then status 200
+    * match response.headers.accept contains 'application/json'
+    Given path 'headers'
+    When method get
+    Then status 200
+    * match response.headers.accept contains 'application/json'

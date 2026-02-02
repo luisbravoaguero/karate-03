@@ -11,8 +11,11 @@
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <karate.version>1.5.2</karate.version>
+
         <surefire.version>3.2.5</surefire.version>
+        <failsafe.version>3.2.5</failsafe.version>
     </properties>
 
     <dependencies>
@@ -22,6 +25,7 @@
             <version>${karate.version}</version>
             <scope>test</scope>
         </dependency>
+
         <!-- Logback implementation -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -33,6 +37,7 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -42,6 +47,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Unit tests only (keep for future real unit tests) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -50,8 +56,61 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <!-- avoid double-running if someone accidentally names a runner *IT -->
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*ITCase.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
+
+            <!-- Karate runners as Integration Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${failsafe.version}</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                        <include>**/*ITCase.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>karate-it</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Executive summary always generated AFTER tests, BEFORE build fails -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>executive-summary</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>report.ExecutiveSummaryReport</mainClass>
+                            <arguments>
+                                <argument>target/karate-reports</argument>
+                                <argument>target/executive-summary/index.html</argument>
+                            </arguments>
+                            <classpathScope>test</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
+
 </project>
