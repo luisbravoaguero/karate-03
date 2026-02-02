@@ -1,0 +1,199 @@
+#!groovy
+import com.mapfre.pod.Container
+import com.mapfre.pod.ContainerTypeCustom
+import com.mapfre.pod.ContainerSize
+import com.mapfre.pod.ContainerVolume
+
+@Library(['global-pipeline-library', 'pe-common-pipeline-config'])
+
+def DEVOPS_PLATFORM_ORGANIZATION = 'org-mapfreperu'
+def MAVEN_3_8_JDK17 = "acrmapfredevops.azurecr.io/mapfre/global/maven:3.8-openjdk-17-slim"
+
+pipeline {
+    agent none
+
+    parameters {
+        choice(name: 'SUITE', choices: ['smoke', 'contract', 'regression'], description: 'Suite to run')
+        choice(name: 'ENV', choices: ['dev', 'qa'], description: 'karate.env (config/<env>.json)')
+        string(name: 'THREADS', defaultValue: '5', description: 'Karate scenario threads (per service)')
+        string(name: 'RETRIES', defaultValue: '0', description: 'Optional retries (only if configured in karate-config.js)')
+        string(name: 'EXTRA_TAGS', defaultValue: '', description: 'Optional tag expression, e.g. ~@wip and ~@quarantine')
+        string(name: 'SERVICES_TO_RUN', defaultValue: '', description: 'Comma-separated services. Empty = all from config/<env>.json')
+    }
+
+    options {
+        timeout(time: 25, unit: 'MINUTES')
+        timestamps()
+        buildDiscarder(logRotator(daysToKeepStr: '30', numToKeepStr: '30', artifactNumToKeepStr: '30'))
+    }
+
+    stages {
+        stage('Preflight') {
+            steps {
+                script {
+                    // Create a small pod for preflight so we can checkout + read config.
+                    def preflightLabel = ("preflight-" + env.BUILD_NUMBER).toLowerCase()
+
+                    podTemplate(
+                            label: preflightLabel,
+                            yaml: getPodTemplate(DEVOPS_PLATFORM_ORGANIZATION, [
+                                    ['maven',
+                                     new ContainerTypeCustom(MAVEN_3_8_JDK17, [ContainerVolume.MAVEN_SETTINGS, ContainerVolume.NFS_CACHE]),
+                                     ContainerSize.LARGE
+                                    ]
+                            ] as Container[], true)
+                    ) {
+                        node(preflightLabel) {
+                            container('maven') {
+                                // Validate numeric params early (fast fail)
+                                int threads
+                                int retries
+                                try {
+                                    threads = Integer.parseInt(params.THREADS.trim())
+                                    retries = Integer.parseInt(params.RETRIES.trim())
+                                } catch (Exception e) {
+                                    error("THREADS and RETRIES must be integers. Got THREADS='${params.THREADS}', RETRIES='${params.RETRIES}'")
+                                }
+                                if (threads <= 0) error("THREADS must be > 0. Got ${threads}")
+                                if (retries < 0) error("RETRIES must be >= 0. Got ${retries}")
+
+                                // Checkout to read the config file from the repo
+                                checkout scm
+
+                                // Read services dynamically from config/<env>.json
+                                def envConfigFile = "src/test/resources/config/${params.ENV}.json"
+                                if (!fileExists(envConfigFile)) {
+                                    error("Config file not found: ${envConfigFile}")
+                                }
+
+                                def configJson = readJSON file: envConfigFile
+                                if (!configJson?.services) {
+                                    error("Invalid config: missing 'services' map in ${envConfigFile}")
+                                }
+
+                                def masterServices = configJson.services.keySet().toList().sort()
+                                if (masterServices.isEmpty()) {
+                                    error("No services found in ${envConfigFile} under 'services'")
+                                }
+
+                                // Resolve servicesToRun from param OR default to all
+                                def servicesToRun = params.SERVICES_TO_RUN?.trim()
+                                        ? params.SERVICES_TO_RUN.split(',').collect { it.trim() }.findAll { it }
+                                        : masterServices
+
+                                // Validate requested services exist in config
+                                servicesToRun.each { s ->
+                                    if (!masterServices.contains(s)) {
+                                        error("Service '${s}' not found in ${envConfigFile}. Available: ${masterServices.join(', ')}")
+                                    }
+                                }
+
+                                // Store resolved values for next stage (env vars are strings)
+                                env.RESOLVED_SERVICES = servicesToRun.join(',')
+                                env.RESOLVED_THREADS  = String.valueOf(threads)
+                                env.RESOLVED_RETRIES  = String.valueOf(retries)
+
+                                // Helpful logging for clarity
+                                echo "Preflight OK ✅"
+                                echo "Suite        : ${params.SUITE}"
+                                echo "Env          : ${params.ENV}"
+                                echo "Services     : ${servicesToRun}"
+                                echo "Threads      : ${threads} (per service)"
+                                echo "Retries      : ${retries}"
+                                echo "Extra tags   : ${params.EXTRA_TAGS?.trim() ? params.EXTRA_TAGS.trim() : '(none)'}"
+                                echo "Config file  : ${envConfigFile}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run suite per service (Jenkins parallel)') {
+            steps {
+                script {
+                    // Suite -> runner mapping
+                    def runnerBySuite = [
+                            smoke     : 'runnersIT.SmokeIT',
+                            contract  : 'runnersIT.ContractIT',
+                            regression: 'runnersIT.RegressionIT'
+                    ]
+                    def runner = runnerBySuite[params.SUITE]
+                    if (!runner) error("Unknown SUITE: ${params.SUITE}")
+
+                    // Resolved list from preflight
+                    def servicesToRun = env.RESOLVED_SERVICES
+                            .split(',')
+                            .collect { it.trim() }
+                            .findAll { it }
+
+                    if (servicesToRun.isEmpty()) {
+                        error("No services resolved. Check Preflight stage.")
+                    }
+
+                    def parallelBranches = [:]
+
+                    for (def svc : servicesToRun) {
+                        def serviceName = svc
+
+                        parallelBranches["svc:${serviceName}"] = {
+                            // ✅ NEW: stage wrapper so Classic Stage View shows each service clearly
+                            stage("svc:${serviceName}") {
+
+                                // Safe Kubernetes label
+                                def safeBase = ("karate-" + params.SUITE + "-" + params.ENV + "-" + serviceName)
+                                        .toLowerCase()
+                                        .replaceAll('[^a-z0-9-]', '-')
+
+                                def safeLabel = (safeBase + "-" + Math.abs(serviceName.hashCode())).take(50)
+
+                                podTemplate(
+                                        label: safeLabel,
+                                        yaml: getPodTemplate(DEVOPS_PLATFORM_ORGANIZATION, [
+                                                ['maven',
+                                                 new ContainerTypeCustom(MAVEN_3_8_JDK17, [ContainerVolume.MAVEN_SETTINGS, ContainerVolume.NFS_CACHE]),
+                                                 ContainerSize.EXTRA_LARGE
+                                                ]
+                                        ] as Container[], true)
+                                ) {
+                                    node(safeLabel) {
+                                        container('maven') {
+                                            // v1 stable: checkout per pod (simple, reliable)
+                                            checkout scm
+
+                                            def cmd = """
+                                              mvn -B clean verify \
+                                                -Dit.test=${runner} \
+                                                -Dkarate.env=${params.ENV} \
+                                                -Dservice=${serviceName} \
+                                                -Dthreads=${env.RESOLVED_THREADS} \
+                                                -Dretries=${env.RESOLVED_RETRIES}
+                                            """.stripIndent().trim()
+
+                                            if (params.EXTRA_TAGS?.trim()) {
+                                                cmd += " -Dkarate.tags=\"${params.EXTRA_TAGS.trim()}\""
+                                            }
+
+                                            // v1 stable policy: UNSTABLE on failure, but always publish reports
+                                            try {
+                                                sh cmd
+                                            } catch (Exception e) {
+                                                echo "Tests failed for service=${serviceName}. Marking UNSTABLE but publishing reports."
+                                                unstable("UNSTABLE: service=${serviceName}")
+                                            } finally {
+                                                junit 'target/karate-reports/**/*.xml'
+                                                archiveArtifacts artifacts: 'target/karate-reports/**', fingerprint: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    parallel parallelBranches
+                }
+            }
+        }
+    }
+}
