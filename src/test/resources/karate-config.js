@@ -32,35 +32,35 @@ function fn() {
   // Expose the full service block to features/helpers
   config.serviceConfig = svc;
 
-  // -----------------------------------
-  // ✅ Retry config (global defaults)
-  // -----------------------------------
-  var props = karate.properties;
+  // ----------------------------
+  // 4) Retry configuration (recommended)
+  //
+  // Convention:
+  //   -Dretries=1  => 1 attempt total (NO retry)
+  //   -Dretries=2  => 2 attempts total (1 retry)
+  //   -Dretries=3  => 3 attempts total (2 retries)
+  //
+  // NOTE: If you use "retry until ..." in a feature, retries MUST be >= 1,
+  // otherwise Karate will fail with "too many retry attempts: 0".
+  // ----------------------------
+  var retryCountRaw = karate.properties['retries'];          // e.g. "1", "2", "3"
+  var retryIntervalRaw = karate.properties['retryInterval']; // e.g. "1000"
 
-  // Support both naming styles (so you don't break Jenkins/local commands):
-  // -Dretries=2 OR -Dkarate.retries=2
-  // -DretryInterval=1000 OR -Dkarate.retryInterval=1000
-  var retriesRaw =
-    props['retries'] || props['karate.retries'] || '0';
+  var retryCount = retryCountRaw ? parseInt(retryCountRaw, 10) : 1;       // default: 1 (no retry)
+  var retryInterval = retryIntervalRaw ? parseInt(retryIntervalRaw, 10) : 1000;
 
-  var intervalRaw =
-    props['retryInterval'] || props['karate.retryInterval'] || '1000';
-
-  var retries = parseInt(retriesRaw, 10);
-  var retryInterval = parseInt(intervalRaw, 10);
-
-  if (isNaN(retries) || retries < 0) retries = 0;
-  if (isNaN(retryInterval) || retryInterval < 0) retryInterval = 1000;
-
-  karate.configure('retry', { count: retries, interval: retryInterval });
-
-  // Optional log (only if user explicitly set any retry property)
-  var userTouchedRetry =
-    props['retries'] || props['karate.retries'] || props['retryInterval'] || props['karate.retryInterval'];
-
-  if (userTouchedRetry) {
-    karate.log('Retry config -> count:', retries, 'interval(ms):', retryInterval);
+  if (isNaN(retryCount) || retryCount < 1) {
+    karate.fail("Invalid -Dretries=" + retryCountRaw + ". Use 1 for no retry, 2+ for retries.");
   }
+  if (isNaN(retryInterval) || retryInterval < 0) {
+    karate.fail("Invalid -DretryInterval=" + retryIntervalRaw + ". Use 0 or a positive number (ms).");
+  }
+
+  // Global retry settings (used when you write: "And retry until <condition>")
+  karate.configure('retry', { count: retryCount, interval: retryInterval });
+
+  // Optional: expose in config for debugging/logging if you want
+  config.retry = { count: retryCount, interval: retryInterval };
 
   return config;
 }
